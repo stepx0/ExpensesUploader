@@ -41,10 +41,14 @@ cd expenses-uploader
 
 - Go to Google Cloud Console
 - Create a new project
-- enable Google Sheets API (APIS & Services --> Library --> search "Google Sheets API" and enable, do the same for "Google Drive API")
+- enable Google Sheets API:
+    - Search APIS & Services
+    - go to Library
+    - search "Google Sheets API" and enable
+    - do the same for "Google Drive API"
 - Create an OAuth 2.0 Client ID for Android:
-    - Package name: com.stepx0.expenses_uploader
-    - SHA-1: Use your debug or release keystore
+    - Package name (same of the app): com.stepx0.expenses_uploader
+    - SHA-1: Use your project debug or release keystore (generate it locally form Gradle --> Tasks --> Android --> signingReport)
 - Configure the OAuth consent screen (set it External, add https://www.googleapis.com/auth/spreadsheets scope).
 
 ### 3. Set up local.properties
@@ -53,6 +57,7 @@ Create a `local.properties` file in your project root (it is `.gitignored`, so s
 
 ```
 SPREADSHEET_ID=your_google_sheet_id_here
+GID=your_google_sheet_specific_page_gid_here (optional)
 ```
 
 This ensures your personal spreadsheet stays private.
@@ -77,7 +82,7 @@ Spreadsheet ID and OAuth credentials are never included in the public repo.
 
 Use dummy/test data for public demos.
 
-Real financial data should never be committed.
+Real financial data should never be committed in the repo.
 
 ---
 
