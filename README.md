@@ -17,7 +17,7 @@ Built with Jetpack Compose, Google Sign-In, and Google Sheets API.
 
 ## Screenshots
 
-// TODO.
+![App Screenshot](docs/Screenshot_20250829-190654.png)
 
 ---
 

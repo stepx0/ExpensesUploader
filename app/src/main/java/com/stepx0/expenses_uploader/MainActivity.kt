@@ -65,8 +65,8 @@ class MainActivity : ComponentActivity() {
 
         // Check already signed in
         accountState = GoogleSignIn.getLastSignedInAccount(this)
-        if (accountState != null) {
-            sheetsService = runCatching { initSheetsService(accountState!!) }
+        accountState?.let {
+            sheetsService = runCatching { initSheetsService(it) }
                 .onFailure { e -> errorState = "Failed to init Sheets: ${e.message}" }
                 .getOrNull()
         }
