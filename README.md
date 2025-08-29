@@ -17,7 +17,7 @@ Built with Jetpack Compose, Google Sign-In, and Google Sheets API.
 
 ## Screenshots
 
-*(You can add screenshots of your UI here without exposing real data.)*
+// TODO.
 
 ---
 
@@ -33,11 +33,12 @@ cd expenses-uploader
 ### 2. Configure your Google Cloud project
 
 - Go to Google Cloud Console
-- Create a new project and enable Google Sheets API.
+- Create a new project
+- enable Google Sheets API (APIS & Services --> Library --> search "Google Sheets API" and enable, do the same for "Google Drive API")
 - Create an OAuth 2.0 Client ID for Android:
     - Package name: com.stepx0.expenses_uploader
     - SHA-1: Use your debug or release keystore
-- Configure the OAuth consent screen (External, add https://www.googleapis.com/auth/spreadsheets scope).
+- Configure the OAuth consent screen (set it External, add https://www.googleapis.com/auth/spreadsheets scope).
 
 ### 3. Set up local.properties
 
