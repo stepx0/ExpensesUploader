@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.biometric.BiometricManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,11 +25,14 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import com.stepx0.expenses_uploader.ui.theme.ExpensesUploaderTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
-    private val spreadsheetId = "YOUR_SPREADSHEET_ID"
+    private val spreadsheetId = BuildConfig.SPREADSHEET_ID
 
     private val signInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -36,20 +40,23 @@ class MainActivity : ComponentActivity() {
             try {
                 val account = task.getResult(ApiException::class.java)
                 if (account != null) {
-                    // Initialize Sheets service for this account
-                    val sheetsService = initSheetsService(account)
-                    // Update Compose state
+                    val sheetsService = runCatching { initSheetsService(account) }
+                        .onFailure { e -> errorState = "Failed to init Sheets: ${e.message}" }
+                        .getOrNull()
+
                     accountState = account
                     this.sheetsService = sheetsService
                 }
             } catch (e: ApiException) {
-                Log.e("MainActivity", "Google Sign-In failed: ${e.statusCode}")
+                errorState = "Google Sign-In failed: ${e.statusCode}"
+                Log.e("MainActivity", errorState ?: "Sign-in failed", e)
             }
         }
 
-    // Compose-observed states
+    // Compose states
     private var accountState by mutableStateOf<GoogleSignInAccount?>(null)
     private var sheetsService: Sheets? by mutableStateOf(null)
+    private var errorState by mutableStateOf<String?>(null) // <-- NEW
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,23 +68,36 @@ class MainActivity : ComponentActivity() {
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // Check if already signed in
+        // Check already signed in
         accountState = GoogleSignIn.getLastSignedInAccount(this)
         if (accountState != null) {
-            sheetsService = initSheetsService(accountState!!)
+            sheetsService = runCatching { initSheetsService(accountState!!) }
+                .onFailure { e -> errorState = "Failed to init Sheets: ${e.message}" }
+                .getOrNull()
         }
 
         setContent {
             ExpensesUploaderTheme {
-                ProvideWindowInsets {
+                Box(Modifier.safeDrawingPadding()) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
-                            .statusBarsPadding()
-                            .navigationBarsPadding(),
+                            .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // Show errors if any
+                        errorState?.let { error ->
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                            ) {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
+
                         if (accountState == null) {
                             Button(onClick = { signInLauncher.launch(googleSignInClient.signInIntent) }) {
                                 Text("Login with Google")
@@ -98,7 +118,8 @@ class MainActivity : ComponentActivity() {
                             ExpenseForm(
                                 sheetsService = sheetsService,
                                 spreadsheetId = spreadsheetId,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                //onError = { msg -> errorState = msg } // <-- propagate errors
                             )
                         }
                     }

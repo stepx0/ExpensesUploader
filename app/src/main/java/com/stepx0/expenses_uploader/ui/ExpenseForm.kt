@@ -1,17 +1,19 @@
 package com.stepx0.expenses_uploader.ui
 
+import android.app.DatePickerDialog
+import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.api.services.sheets.v4.Sheets
 import com.stepx0.expenses_uploader.data.appendExpenseRow
 import com.stepx0.expenses_uploader.data.fetchDropdownOptions
 import com.stepx0.expenses_uploader.model.Expense
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,32 +22,34 @@ fun ExpenseForm(
     sheetsService: Sheets?,
     spreadsheetId: String
 ) {
-    // State for form fields
-    var month by remember { mutableStateOf("") }
-    var day by remember { mutableStateOf("") }
-    var year by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+
+    // Date state
+    var year by remember { mutableStateOf(calendar.get(Calendar.YEAR).toString()) }
+    var month by remember { mutableStateOf((calendar.get(Calendar.MONTH) + 1).toString()) }
+    var day by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH).toString()) }
+
+    // Other fields
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var currency by remember { mutableStateOf("") }
 
-    // Dropdown: Category
-    var categoryExpanded by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf("") }
-    var categoryOptions by remember { mutableStateOf(listOf<String>()) }
+    // Dropdowns: primary + secondary categories
+    var primaryCategoryExpanded by remember { mutableStateOf(false) }
+    var selectedPrimaryCategory by remember { mutableStateOf("") }
+    var primaryCategoryOptions by remember { mutableStateOf(listOf<String>()) }
 
-    // Dropdown: Method
-    var methodExpanded by remember { mutableStateOf(false) }
-    var selectedMethod by remember { mutableStateOf("") }
-    var methodOptions by remember { mutableStateOf(listOf<String>()) }
+    var secondaryCategoryExpanded by remember { mutableStateOf(false) }
+    var selectedSecondaryCategory by remember { mutableStateOf("") }
+    var secondaryCategoryOptions by remember { mutableStateOf(listOf<String>()) }
 
-    // Coroutine scope
     val scope = rememberCoroutineScope()
 
     // Load dropdown options from Sheets
     LaunchedEffect(sheetsService) {
         if (sheetsService != null && spreadsheetId.isNotEmpty()) {
-            categoryOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!C2")
-            methodOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!D2")
+            primaryCategoryOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!C2")
+            secondaryCategoryOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!D2")
         }
     }
 
@@ -53,28 +57,29 @@ fun ExpenseForm(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Date inputs
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = month,
-                onValueChange = { month = it },
-                label = { Text("Month") },
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = day,
-                onValueChange = { day = it },
-                label = { Text("Day") },
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = year,
-                onValueChange = { year = it },
-                label = { Text("Year") },
-                modifier = Modifier.weight(1f)
-            )
+        Text("Default currency: €")
+
+        // 📅 Date Picker
+        Button(
+            onClick = {
+                DatePickerDialog(
+                    context,
+                    { _: DatePicker, y: Int, m: Int, d: Int ->
+                        year = y.toString()
+                        month = (m + 1).toString()
+                        day = d.toString()
+                    },
+                    year.toInt(),
+                    month.toInt() - 1,
+                    day.toInt()
+                ).show()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("$day/$month/$year")
         }
 
+        // Description
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
@@ -82,6 +87,7 @@ fun ExpenseForm(
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Amount
         OutlinedTextField(
             value = amount,
             onValueChange = { amount = it },
@@ -89,74 +95,67 @@ fun ExpenseForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = currency,
-            onValueChange = { currency = it },
-            label = { Text("Currency") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Category dropdown
+        // Primary Category dropdown
         ExposedDropdownMenuBox(
-            expanded = categoryExpanded,
-            onExpandedChange = { categoryExpanded = !categoryExpanded }
+            expanded = primaryCategoryExpanded,
+            onExpandedChange = { primaryCategoryExpanded = !primaryCategoryExpanded }
         ) {
             OutlinedTextField(
-                value = selectedCategory,
+                value = selectedPrimaryCategory,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Category") },
+                label = { Text("Primary Category") },
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = categoryExpanded,
-                onDismissRequest = { categoryExpanded = false }
+                expanded = primaryCategoryExpanded,
+                onDismissRequest = { primaryCategoryExpanded = false }
             ) {
-                categoryOptions.forEach { option ->
+                primaryCategoryOptions.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            selectedCategory = option
-                            categoryExpanded = false
+                            selectedPrimaryCategory = option
+                            primaryCategoryExpanded = false
                         }
                     )
                 }
             }
         }
 
-        // Method dropdown
+        // Secondary Category dropdown
         ExposedDropdownMenuBox(
-            expanded = methodExpanded,
-            onExpandedChange = { methodExpanded = !methodExpanded }
+            expanded = secondaryCategoryExpanded,
+            onExpandedChange = { secondaryCategoryExpanded = !secondaryCategoryExpanded }
         ) {
             OutlinedTextField(
-                value = selectedMethod,
+                value = selectedSecondaryCategory,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Payment Method") },
+                label = { Text("Secondary Category") },
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = methodExpanded,
-                onDismissRequest = { methodExpanded = false }
+                expanded = secondaryCategoryExpanded,
+                onDismissRequest = { secondaryCategoryExpanded = false }
             ) {
-                methodOptions.forEach { option ->
+                secondaryCategoryOptions.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            selectedMethod = option
-                            methodExpanded = false
+                            selectedSecondaryCategory = option
+                            secondaryCategoryExpanded = false
                         }
                     )
                 }
             }
         }
 
-        // Save Button
+        // Save button
         Button(
             onClick = {
                 if (sheetsService != null && spreadsheetId.isNotEmpty()) {
@@ -166,9 +165,9 @@ fun ExpenseForm(
                         day = day,
                         description = description,
                         amount = amount,
-                        currency = currency,
-                        category = selectedCategory,
-                        method = selectedMethod
+                        currency = "", // currency omitted
+                        category = selectedPrimaryCategory,
+                        method = selectedSecondaryCategory // reusing model field for secondary category
                     )
                     scope.launch {
                         appendExpenseRow(sheetsService, spreadsheetId, expense)
