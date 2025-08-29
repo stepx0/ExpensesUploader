@@ -17,10 +17,13 @@ Built with Jetpack Compose, Google Sign-In, and Google Sheets API.
 
 ## Screenshots
 
-<div style="display: flex; gap: 10px; flex-wrap: wrap;">
-  <img src="docs/Screenshot_20250829-190654.png" alt="Screenshot 1" width="200"/>
-  <img src="docs/Screenshot_20250829-190532.png" alt="Screenshot 2" width="200"/>
-  <img src="docs/Screenshot_20250829-190329.png" alt="Screenshot 3" width="200"/>
+Here are some screenshots to help visualize how it works:
+
+<br>
+<div>
+  <img src="docs/Screenshot_20250829-190329.png" alt="Screenshot 1" width="334"/>
+  <img src="docs/Screenshot_20250829-190532.png" alt="Screenshot 2" width="334"/>
+  <img src="docs/Screenshot_20250829-190654.png" alt="Screenshot 3" width="334"/>
 </div>
 
 ---
