@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.Packaging
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,9 +20,15 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val spreadsheetId: String? = project.properties["SPREADSHEET_ID"] as? String
-        buildConfigField("String", "SPREADSHEET_ID", "\"${spreadsheetId ?: ""}\"")
+        val localPropsFile = rootProject.file("local.properties")
+        val localProps = Properties().apply {
+            if (localPropsFile.exists()) {
+                load(localPropsFile.inputStream())
+            }
+        }
 
+        val spreadsheetId = localProps.getProperty("SPREADSHEET_ID") ?: ""
+        buildConfigField("String", "SPREADSHEET_ID", "\"$spreadsheetId\"")
     }
 
     buildTypes {

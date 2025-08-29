@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.api.services.sheets.v4.Sheets
 import com.stepx0.expenses_uploader.data.appendExpenseRow
+import com.stepx0.expenses_uploader.data.fetchCategoryValues
 import com.stepx0.expenses_uploader.data.fetchDropdownOptions
 import com.stepx0.expenses_uploader.model.Expense
 import kotlinx.coroutines.launch
@@ -43,13 +44,17 @@ fun ExpenseForm(
     var selectedSecondaryCategory by remember { mutableStateOf("") }
     var secondaryCategoryOptions by remember { mutableStateOf(listOf<String>()) }
 
+    var isLoading by remember { mutableStateOf(true) }
+
     val scope = rememberCoroutineScope()
 
     // Load dropdown options from Sheets
     LaunchedEffect(sheetsService) {
         if (sheetsService != null && spreadsheetId.isNotEmpty()) {
-            primaryCategoryOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!C2")
-            secondaryCategoryOptions = fetchDropdownOptions(sheetsService, spreadsheetId, "Sheet1!D2")
+            isLoading = true
+            primaryCategoryOptions = fetchCategoryValues(sheetsService, spreadsheetId, "2025 Expenses")
+            secondaryCategoryOptions = fetchCategoryValues(sheetsService, spreadsheetId, "2025 Expenses")
+            isLoading = false
         }
     }
 
@@ -98,29 +103,37 @@ fun ExpenseForm(
         // Primary Category dropdown
         ExposedDropdownMenuBox(
             expanded = primaryCategoryExpanded,
-            onExpandedChange = { primaryCategoryExpanded = !primaryCategoryExpanded }
+            onExpandedChange = { if (!isLoading) primaryCategoryExpanded = !primaryCategoryExpanded }
         ) {
             OutlinedTextField(
-                value = selectedPrimaryCategory,
+                value = if (selectedPrimaryCategory.isEmpty() && isLoading) "Loading..." else selectedPrimaryCategory,
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Primary Category") },
                 modifier = Modifier
                     .menuAnchor()
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                enabled = !isLoading
             )
             ExposedDropdownMenu(
                 expanded = primaryCategoryExpanded,
                 onDismissRequest = { primaryCategoryExpanded = false }
             ) {
-                primaryCategoryOptions.forEach { option ->
+                if (isLoading) {
                     DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            selectedPrimaryCategory = option
-                            primaryCategoryExpanded = false
-                        }
+                        text = { Text("Loading options...") },
+                        onClick = {}
                     )
+                } else {
+                    primaryCategoryOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                selectedPrimaryCategory = option
+                                primaryCategoryExpanded = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -128,29 +141,37 @@ fun ExpenseForm(
         // Secondary Category dropdown
         ExposedDropdownMenuBox(
             expanded = secondaryCategoryExpanded,
-            onExpandedChange = { secondaryCategoryExpanded = !secondaryCategoryExpanded }
+            onExpandedChange = { if (!isLoading) secondaryCategoryExpanded = !secondaryCategoryExpanded }
         ) {
             OutlinedTextField(
-                value = selectedSecondaryCategory,
+                value = if (selectedSecondaryCategory.isEmpty() && isLoading) "Loading..." else selectedSecondaryCategory,
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Secondary Category") },
                 modifier = Modifier
                     .menuAnchor()
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                enabled = !isLoading
             )
             ExposedDropdownMenu(
                 expanded = secondaryCategoryExpanded,
                 onDismissRequest = { secondaryCategoryExpanded = false }
             ) {
-                secondaryCategoryOptions.forEach { option ->
+                if (isLoading) {
                     DropdownMenuItem(
-                        text = { Text(option) },
-                        onClick = {
-                            selectedSecondaryCategory = option
-                            secondaryCategoryExpanded = false
-                        }
+                        text = { Text("Loading options...") },
+                        onClick = {}
                     )
+                } else {
+                    secondaryCategoryOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                selectedSecondaryCategory = option
+                                secondaryCategoryExpanded = false
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -167,7 +188,7 @@ fun ExpenseForm(
                         amount = amount,
                         currency = "", // currency omitted
                         category = selectedPrimaryCategory,
-                        method = selectedSecondaryCategory // reusing model field for secondary category
+                        method = selectedSecondaryCategory // using secondary category here
                     )
                     scope.launch {
                         appendExpenseRow(sheetsService, spreadsheetId, expense)
@@ -180,3 +201,4 @@ fun ExpenseForm(
         }
     }
 }
+

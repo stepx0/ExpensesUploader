@@ -48,8 +48,22 @@ suspend fun fetchDropdownOptions(
 
         else -> emptyList()
     }
-
 }
+
+suspend fun fetchCategoryValues(
+    sheetsService: Sheets,
+    spreadsheetId: String,
+    sheetName: String = "2025 Expenses",
+    columnRange: String = "H2:H"
+): List<String> = withContext(Dispatchers.IO) {
+    val response = sheetsService.spreadsheets().values()
+        .get(spreadsheetId, "$sheetName!$columnRange")
+        .execute()
+
+    val values = response.getValues() ?: emptyList<List<Any>>()
+    values.mapNotNull { it.getOrNull(0)?.toString() }.filter { it.isNotEmpty() }
+}
+
 
 /**
  * Append a single expense row to the Google Sheet.
