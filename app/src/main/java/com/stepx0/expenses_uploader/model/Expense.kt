@@ -11,21 +11,23 @@ data class Expense(
     val amount: String,
     val currency: String,
     val category: String,
-    val method: String
+    val subCategory: String
 ) {
     /**
      * Convert this expense into a row (list of strings)
      * ready to be sent to Google Sheets.
      */
     fun toRow(): List<String> {
-        val date = "$year-$month-$day"
         return listOf(
-            date,
+            month,
+            day,
             description,
             amount,
             currency,
+            "", // % company (in case it's for a business)
+            amount,
             category,
-            method
+            subCategory
         )
     }
 }

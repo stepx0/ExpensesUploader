@@ -14,47 +14,14 @@ import kotlinx.coroutines.withContext
  *
  * @param sheetsService Authenticated Sheets API client
  * @param spreadsheetId The Google Sheet ID
- * @param cellRange The cell containing the dropdown (e.g., "Sheet1!C2")
+ * @param sheetName The sheet name
  * @return List of string options for the dropdown
  */
-suspend fun fetchDropdownOptions(
-    sheetsService: Sheets,
-    spreadsheetId: String,
-    cellRange: String
-): List<String> = withContext(Dispatchers.IO) {
-    val response: Spreadsheet = sheetsService.spreadsheets().get(spreadsheetId)
-        .setRanges(listOf(cellRange))
-        .setFields("sheets.data.rowData.values.dataValidation")
-        .execute()
-
-    //val validation = response.sheets[0].data[0].rowData[0].values[0].dataValidation
-    val validation = (response.sheets[0].data[0].rowData[0].values.toList()[0] as CellData).dataValidation
-
-    val condition = validation?.condition ?: return@withContext emptyList<String>()
-
-    return@withContext when (condition.type) {
-        "ONE_OF_LIST" -> {
-            condition.values?.mapNotNull { (it as CellData).userEnteredValue.toString()
-            }  // safely get userEnteredValue
-                ?: emptyList()
-        }
-
-        "ONE_OF_RANGE" -> {
-            val range = (condition.values?.firstOrNull() as CellData)?.userEnteredValue?.toString()
-                ?: return@withContext emptyList()
-            val result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute()
-            result.getValues()?.map { it[0].toString() } ?: emptyList()
-        }
-
-        else -> emptyList()
-    }
-}
-
 suspend fun fetchCategoryValues(
     sheetsService: Sheets,
     spreadsheetId: String,
-    sheetName: String = "2025 Expenses",
-    columnRange: String = "H2:H"
+    sheetName: String,
+    columnRange: String
 ): List<String> = withContext(Dispatchers.IO) {
     val response = sheetsService.spreadsheets().values()
         .get(spreadsheetId, "$sheetName!$columnRange")
@@ -79,7 +46,8 @@ suspend fun appendExpenseRow(
 ) = withContext(Dispatchers.IO) {
     val body = ValueRange().setValues(listOf(expense.toRow()))
     sheetsService.spreadsheets().values()
-        .append(spreadsheetId, "Sheet1!A:F", body)
+        .append(spreadsheetId, "Expenses!A:I", body)
         .setValueInputOption("RAW")
+        .setIncludeValuesInResponse(false)
         .execute()
 }

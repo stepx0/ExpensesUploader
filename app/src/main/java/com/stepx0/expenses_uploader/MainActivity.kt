@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -20,18 +21,13 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.sheets.v4.Sheets
 import com.stepx0.expenses_uploader.ui.ExpenseForm
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.statusBarsPadding
 import com.stepx0.expenses_uploader.ui.theme.ExpensesUploaderTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private val spreadsheetId = BuildConfig.SPREADSHEET_ID
+    private val gid = BuildConfig.GID
 
     private val signInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -76,50 +72,76 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            ExpensesUploaderTheme {
-                Box(Modifier.safeDrawingPadding()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Show errors if any
-                        errorState?.let { error ->
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                            ) {
-                                Text(
-                                    text = error,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(12.dp)
+            var darkThemeEnabled by remember { mutableStateOf(true) }
+
+            ExpensesUploaderTheme(darkTheme = darkThemeEnabled) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Box(Modifier.safeDrawingPadding()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Show errors if any
+                            errorState?.let { error ->
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                                ) {
+                                    Text(
+                                        text = error,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier.padding(12.dp)
+                                    )
+                                }
+                            }
+
+                            if (accountState == null) {
+                                Button(onClick = { signInLauncher.launch(googleSignInClient.signInIntent) }) {
+                                    Text("Login with Google")
+                                }
+                            } else {
+                                Text("Signed in as: ${accountState?.email}")
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Button(onClick = {
+                                        googleSignInClient.signOut().addOnCompleteListener {
+                                            sheetsService = null
+                                            accountState = null
+                                        }
+                                    }) {
+                                        Text("Logout")
+                                    }
+
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(if (darkThemeEnabled) "🌙" else "☀️")
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Switch(
+                                            checked = darkThemeEnabled,
+                                            onCheckedChange = { darkThemeEnabled = it }
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                ExpenseForm(
+                                    sheetsService = sheetsService,
+                                    spreadsheetId = spreadsheetId,
+                                    gid = gid,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    //onError = { msg -> errorState = msg } // <-- propagate errors
                                 )
                             }
-                        }
-
-                        if (accountState == null) {
-                            Button(onClick = { signInLauncher.launch(googleSignInClient.signInIntent) }) {
-                                Text("Login with Google")
-                            }
-                        } else {
-                            Text("Signed in as: ${accountState?.email}")
-                            Button(onClick = {
-                                googleSignInClient.signOut().addOnCompleteListener {
-                                    sheetsService = null
-                                    accountState = null
-                                }
-                            }) {
-                                Text("Logout")
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            ExpenseForm(
-                                sheetsService = sheetsService,
-                                spreadsheetId = spreadsheetId,
-                                modifier = Modifier.fillMaxWidth(),
-                                //onError = { msg -> errorState = msg } // <-- propagate errors
-                            )
                         }
                     }
                 }

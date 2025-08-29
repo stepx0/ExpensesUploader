@@ -28,7 +28,10 @@ android {
         }
 
         val spreadsheetId = localProps.getProperty("SPREADSHEET_ID") ?: ""
+        val gid = localProps.getProperty("GID") ?: ""
+
         buildConfigField("String", "SPREADSHEET_ID", "\"$spreadsheetId\"")
+        buildConfigField("String", "GID", "\"$gid\"")
     }
 
     buildTypes {
