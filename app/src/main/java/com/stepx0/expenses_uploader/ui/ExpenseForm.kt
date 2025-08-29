@@ -4,7 +4,9 @@ import android.app.DatePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,7 +14,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -34,6 +38,7 @@ fun ExpenseForm(
 ) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+    val focusManager = LocalFocusManager.current // Focus manager
 
     // Date state
     var year by remember { mutableStateOf(calendar.get(Calendar.YEAR).toString()) }
@@ -54,6 +59,7 @@ fun ExpenseForm(
     var secondaryCategoryOptions by remember { mutableStateOf(listOf<String>()) }
 
     var isLoading by remember { mutableStateOf(true) }
+    val isSaveEnabled = description.isNotBlank() && amount.isNotBlank()
 
     val scope = rememberCoroutineScope()
 
@@ -61,18 +67,36 @@ fun ExpenseForm(
     LaunchedEffect(sheetsService) {
         if (sheetsService != null && spreadsheetId.isNotEmpty()) {
             isLoading = true
-            primaryCategoryOptions = fetchCategoryValues(sheetsService, spreadsheetId, "Expense Validation", columnRange = "E2:E")
-            secondaryCategoryOptions = fetchCategoryValues(sheetsService, spreadsheetId, "Expense Validation", columnRange = "F2:F")
-            isLoading = false
+            try {
+                primaryCategoryOptions = fetchCategoryValues(
+                    sheetsService,
+                    spreadsheetId,
+                    "Expense Validation",
+                    columnRange = "E2:E"
+                )
+                secondaryCategoryOptions = fetchCategoryValues(
+                    sheetsService,
+                    spreadsheetId,
+                    "Expense Validation",
+                    columnRange = "F2:F"
+                )
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to load categories: ${e.message}", Toast.LENGTH_LONG).show()
+            } finally {
+                isLoading = false
+            }
         }
     }
 
-    // Enable scrolling
+    // Enable scrolling and tap outside to clear focus
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // ✅ makes whole form scrollable
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .pointerInput(Unit) { // Detect taps outside TextFields
+                detectTapGestures { focusManager.clearFocus() }
+            },
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Default currency: €")
@@ -80,6 +104,7 @@ fun ExpenseForm(
         // 📅 Date Picker
         Button(
             onClick = {
+                focusManager.clearFocus() // Clear focus when opening DatePicker
                 DatePickerDialog(
                     context,
                     { _: DatePicker, y: Int, m: Int, d: Int ->
@@ -186,6 +211,7 @@ fun ExpenseForm(
         // Save button
         Button(
             onClick = {
+                focusManager.clearFocus()
                 if (sheetsService != null && spreadsheetId.isNotEmpty()) {
                     val expense = Expense(
                         year = year,
@@ -193,21 +219,37 @@ fun ExpenseForm(
                         day = day,
                         description = description,
                         amount = amount,
-                        currency = "", // currency omitted
+                        currency = "",
                         category = selectedPrimaryCategory,
                         subCategory = selectedSecondaryCategory
                     )
                     scope.launch {
-                        appendExpenseRow(sheetsService, spreadsheetId, expense)
+                        try {
+                            appendExpenseRow(sheetsService, spreadsheetId, expense)
+                            // Clear form on success
+                            year = calendar.get(Calendar.YEAR).toString()
+                            month = (calendar.get(Calendar.MONTH) + 1).toString()
+                            day = calendar.get(Calendar.DAY_OF_MONTH).toString()
+                            description = ""
+                            amount = ""
+                            selectedPrimaryCategory = ""
+                            selectedSecondaryCategory = ""
+                            Toast.makeText(context, "Expense added successfully!", Toast.LENGTH_LONG).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Error! Failed to upload expense.", Toast.LENGTH_LONG).show()
+                        }
                     }
+                } else {
+                    Toast.makeText(context, "Sheets service unavailable.", Toast.LENGTH_LONG).show()
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = isSaveEnabled // disable button if amount or description is empty
         ) {
             Text("Save Expense")
         }
 
-        // Open Sheet button
+        // Open Sheet link
         Text(
             text = "Open Google Sheet",
             color = MaterialTheme.colorScheme.primary,
