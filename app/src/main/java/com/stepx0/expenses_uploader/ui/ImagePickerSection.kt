@@ -45,7 +45,7 @@ fun ImagePickerSection(
         }
     }
 
-    Text("Upload from galley or camera:")
+    Text("Get data scanning a receipt:")
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween

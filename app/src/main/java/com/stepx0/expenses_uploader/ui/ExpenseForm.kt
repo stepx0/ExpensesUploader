@@ -203,7 +203,7 @@ fun ExpenseForm(
                         DropdownMenuItem(
                             text = { Text(option) },
                             onClick = {
-                                selectedPrimaryCategory = option
+                                selectedPrimaryCategory = if(option != "-- Empty --") option else ""
                                 primaryCategoryExpanded = false
                             }
                         )
@@ -233,7 +233,7 @@ fun ExpenseForm(
                         DropdownMenuItem(
                             text = { Text(option) },
                             onClick = {
-                                selectedSecondaryCategory = option
+                                selectedSecondaryCategory = if(option != "-- Empty --") option else ""
                                 secondaryCategoryExpanded = false
                             }
                         )
