@@ -86,4 +86,9 @@ dependencies {
     implementation(libs.google.sheets)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.accompanist.insets)
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.play.services.tasks.ktx)
+    implementation(libs.tflite.runtime)
+    implementation(libs.tflite.support)
+
 }

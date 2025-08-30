@@ -14,7 +14,10 @@ google-sheets = "v4-rev20220927-2.0.0"
 play-services-auth = "20.7.0"
 kotlinx-coroutines = "1.7.3"
 accompanist = "0.30.1"
-biometricKtx = "1.1.0"
+mlkit = "16.0.0"
+playServicesKtx = "1.8.1"
+tflite = "2.0.0"
+tflite-support = "0.4.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +40,10 @@ google-sheets = { module = "com.google.apis:google-api-services-sheets", version
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "play-services-auth" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 accompanist-insets = { module = "com.google.accompanist:accompanist-insets", version.ref = "accompanist" }
+mlkit-text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "mlkit" }
+play-services-tasks-ktx = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "playServicesKtx" }
+tflite-runtime = { module = "org.tensorflow:tensorflow-lite", version.ref = "tflite" }
+tflite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tflite-support" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

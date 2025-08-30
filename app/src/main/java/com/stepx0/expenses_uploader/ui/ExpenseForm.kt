@@ -2,16 +2,22 @@ package com.stepx0.expenses_uploader.ui
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.net.Uri
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -30,7 +36,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -39,8 +48,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.google.api.services.sheets.v4.Sheets
+import com.stepx0.expenses_uploader.data.BertModelManager
+import com.stepx0.expenses_uploader.data.OcrHelper
+import com.stepx0.expenses_uploader.data.OcrHelper.runOcrOnUri
 import com.stepx0.expenses_uploader.data.appendExpenseRow
 import com.stepx0.expenses_uploader.data.fetchCategoryValues
+import com.stepx0.expenses_uploader.model.BertModel
 import com.stepx0.expenses_uploader.model.Expense
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -98,7 +111,11 @@ fun ExpenseForm(
                     columnRange = "F2:F"
                 )
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to load categories: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    "Failed to load categories: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             } finally {
                 isLoading = false
             }
@@ -251,9 +268,17 @@ fun ExpenseForm(
                             amount = ""
                             selectedPrimaryCategory = ""
                             selectedSecondaryCategory = ""
-                            Toast.makeText(context, "Expense added successfully!", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Expense added successfully!",
+                                Toast.LENGTH_LONG
+                            ).show()
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Error! Failed to upload expense.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Error! Failed to upload expense.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 } else {
@@ -264,6 +289,87 @@ fun ExpenseForm(
             enabled = isSaveEnabled // disable button if amount or description is empty
         ) {
             Text("Save Expense")
+        }
+
+        var isProcessingImage by remember { mutableStateOf(false) }
+
+        ImagePickerSection { uri ->
+            scope.launch {
+                try {
+                    isProcessingImage = true
+
+                    // Use the singleton model manager
+                    val bertModel = BertModelManager.getBertModel(context)
+
+                    // Extract text using OCR
+                    val ocrText = runOcrOnUri(context, uri)
+
+                    // Process image with BERT + OCR
+                    var (extractedDescription, extractedAmount) = OcrHelper.processReceiptWithBert(
+                        context = context,
+                        ocrText = ocrText,
+                        bertModel = bertModel
+                    )
+
+                    // Extract amount with heuristic logic
+                    val lines = ocrText.lines().map { it.trim() }.filter { it.isNotEmpty() }
+                    val heuristicAmount = OcrHelper.extractTotal(lines)
+
+                    // Update form fields with extracted data
+                    if (extractedDescription.isNotEmpty() && extractedDescription != "No text found") {
+                        description = extractedDescription
+                    }
+
+                    if(heuristicAmount != extractedAmount)
+                        extractedAmount = heuristicAmount
+
+                    if (extractedAmount.isNotEmpty()) {
+                        amount = extractedAmount
+                    }
+
+                    val resultMessage = when {
+                        extractedDescription.isNotEmpty() && extractedAmount.isNotEmpty() ->
+                            "✓ Extracted: $extractedDescription - €$extractedAmount"
+                        extractedDescription.isNotEmpty() ->
+                            "✓ Extracted description: $extractedDescription"
+                        extractedAmount.isNotEmpty() ->
+                            "✓ Extracted amount: €$extractedAmount"
+                        else ->
+                            "⚠️ Could not extract data from image. Please fill manually."
+                    }
+
+                    Toast.makeText(context, resultMessage, Toast.LENGTH_LONG).show()
+
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        context,
+                        "Error processing image: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } finally {
+                    isProcessingImage = false
+                }
+            }
+        }
+
+
+// Add loading indicator - place this right after the ImagePickerSection
+        if (isProcessingImage) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Processing image...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Open Sheet link
@@ -283,5 +389,6 @@ fun ExpenseForm(
                     context.startActivity(intent)
                 }
         )
+
     }
 }

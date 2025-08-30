@@ -132,7 +132,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
                                 ExpenseForm(
                                     sheetsService = sheetsService,
