@@ -98,13 +98,13 @@ fun ExpenseForm(
         if (sheetsService != null && spreadsheetId.isNotEmpty()) {
             isLoading = true
             try {
-                primaryCategoryOptions = fetchCategoryValues(
+                primaryCategoryOptions = listOf("-- Empty --") + fetchCategoryValues(
                     sheetsService,
                     spreadsheetId,
                     "Expense Validation",
                     columnRange = "E2:E"
                 )
-                secondaryCategoryOptions = fetchCategoryValues(
+                secondaryCategoryOptions = listOf("-- Empty --") + fetchCategoryValues(
                     sheetsService,
                     spreadsheetId,
                     "Expense Validation",
@@ -187,7 +187,7 @@ fun ExpenseForm(
                 onExpandedChange = { primaryCategoryExpanded = !primaryCategoryExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedPrimaryCategory,
+                    value = if(selectedPrimaryCategory != "-- Empty --") selectedPrimaryCategory else "",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Primary Category") },
@@ -217,7 +217,7 @@ fun ExpenseForm(
                 onExpandedChange = { secondaryCategoryExpanded = !secondaryCategoryExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedSecondaryCategory,
+                    value = if(selectedSecondaryCategory != "-- Empty --") selectedSecondaryCategory else "",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Secondary Category") },
