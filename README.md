@@ -2,6 +2,7 @@
 
 A simple Android app to log and upload personal expenses to Google Sheets.  
 Built with Jetpack Compose, Google Sign-In, and Google Sheets API.
+Second version enhanced with ML Kit OCR + TensorFlow Lite BERT for automatic receipt parsing.
 
 ---
 
@@ -12,7 +13,12 @@ Built with Jetpack Compose, Google Sign-In, and Google Sheets API.
 - Upload expenses to a Google Sheet
 - Logout functionality
 - Supports multiple devices (sign in with the same Google account)
-
+- Receipt scanning:
+    - Extracts text from receipts using ML Kit OCR
+    - Processes raw OCR text with a TensorFlow Lite BERT model to identify
+        - Description (store / item)
+        - Amount (total expense)
+- After scansion results, auto-fills expense fields in the form to save time
 ---
 
 ## Screenshots
@@ -26,6 +32,7 @@ Here are some screenshots to help visualize how it works:
   <img src="docs/Screenshot_20250829-190654.png" alt="Screenshot 3" width="334"/>
 </div>
 
+// TODO: update screenshots with scanning logic enhancement.
 ---
 
 ## Setup
