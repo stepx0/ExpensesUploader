@@ -320,6 +320,10 @@ fun ExpenseForm(
                         description = extractedDescription
                     }
 
+                    // since heuristic is expected to perform slightly better than model,
+                    // we assume that heuristic amount will always be better than model output
+                    // todo: improve heuristic
+                    // todo: train BERT model to have better guessing
                     if(heuristicAmount != extractedAmount)
                         extractedAmount = heuristicAmount
 
