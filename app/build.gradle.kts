@@ -29,9 +29,15 @@ android {
 
         val spreadsheetId = localProps.getProperty("SPREADSHEET_ID") ?: ""
         val gid = localProps.getProperty("GID") ?: ""
+        val pCatRange = localProps.getProperty("PRIMARY_CAT_RANGE") ?: ""
+        val sCatRange = localProps.getProperty("SECONDARY_CAT_RANGE") ?: ""
+        val uploadRange = localProps.getProperty("UPLOAD_RANGE") ?: ""
 
         buildConfigField("String", "SPREADSHEET_ID", "\"$spreadsheetId\"")
         buildConfigField("String", "GID", "\"$gid\"")
+        buildConfigField("String", "PRIMARY_CAT_RANGE", "\"$pCatRange\"")
+        buildConfigField("String", "SECONDARY_CAT_RANGE", "\"$sCatRange\"")
+        buildConfigField("String", "UPLOAD_RANGE", "\"$uploadRange\"")
     }
 
     buildTypes {

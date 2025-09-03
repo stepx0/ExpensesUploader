@@ -41,11 +41,12 @@ suspend fun fetchCategoryValues(
 suspend fun appendExpenseRow(
     sheetsService: Sheets,
     spreadsheetId: String,
-    expense: Expense
+    expense: Expense,
+    range: String
 ): AppendValuesResponse? = withContext(Dispatchers.IO) {
     val body = ValueRange().setValues(listOf(expense.toRow()))
     sheetsService.spreadsheets().values()
-        .append(spreadsheetId, "Expenses!A:I", body)
+        .append(spreadsheetId, range, body)
         .setValueInputOption("RAW")
         .setIncludeValuesInResponse(false)
         .execute()

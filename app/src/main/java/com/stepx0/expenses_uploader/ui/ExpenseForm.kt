@@ -2,19 +2,16 @@ package com.stepx0.expenses_uploader.ui
 
 import android.app.DatePickerDialog
 import android.content.Intent
-import android.net.Uri
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,8 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -48,12 +43,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.google.api.services.sheets.v4.Sheets
+import com.stepx0.expenses_uploader.BuildConfig
 import com.stepx0.expenses_uploader.data.BertModelManager
 import com.stepx0.expenses_uploader.data.OcrHelper
 import com.stepx0.expenses_uploader.data.OcrHelper.runOcrOnUri
 import com.stepx0.expenses_uploader.data.appendExpenseRow
 import com.stepx0.expenses_uploader.data.fetchCategoryValues
-import com.stepx0.expenses_uploader.model.BertModel
 import com.stepx0.expenses_uploader.model.Expense
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -69,6 +64,10 @@ fun ExpenseForm(
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val focusManager = LocalFocusManager.current // Focus manager
+
+    val primaryCatRange = BuildConfig.PRIMARY_CAT_RANGE
+    val secondaryCatRange = BuildConfig.SECONDARY_CAT_RANGE
+    val UPLOAD_RANGE = BuildConfig.UPLOAD_RANGE
 
     // Date state
     var year by remember { mutableStateOf(calendar.get(Calendar.YEAR).toString()) }
@@ -102,13 +101,13 @@ fun ExpenseForm(
                     sheetsService,
                     spreadsheetId,
                     "Expense Validation",
-                    columnRange = "E2:E"
+                    columnRange = primaryCatRange
                 )
                 secondaryCategoryOptions = listOf("-- Empty --") + fetchCategoryValues(
                     sheetsService,
                     spreadsheetId,
                     "Expense Validation",
-                    columnRange = "F2:F"
+                    columnRange = secondaryCatRange
                 )
             } catch (e: Exception) {
                 Toast.makeText(
@@ -259,7 +258,7 @@ fun ExpenseForm(
                     )
                     scope.launch {
                         try {
-                            appendExpenseRow(sheetsService, spreadsheetId, expense)
+                            appendExpenseRow(sheetsService, spreadsheetId, expense, UPLOAD_RANGE)
                             // Clear form on success
                             year = calendar.get(Calendar.YEAR).toString()
                             month = (calendar.get(Calendar.MONTH) + 1).toString()

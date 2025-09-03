@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
     private val spreadsheetId = BuildConfig.SPREADSHEET_ID
     private val gid = BuildConfig.GID
 
+
     private val signInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
