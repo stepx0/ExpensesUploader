@@ -100,15 +100,6 @@ Real financial data should never be committed in the repo.
 
 ---
 
-## Dependencies
-
-- Jetpack Compose
-- Google Sign-In (com.google.android.gms:play-services-auth)
-- Google Sheets API (com.google.api-client, com.google.apis:google-api-services-sheets)
-- Accompanist Insets (com.google.accompanist:accompanist-insets)
-
----
-
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](https://en.wikipedia.org/wiki/MIT_License) info for details.
