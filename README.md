@@ -9,7 +9,7 @@ Second version enhanced with ML Kit OCR + TensorFlow Lite BERT for automatic rec
 ## Features
 
 - Google Sign-In authentication
-- Add expenses through a clean Compose UI
+- Add expenses through a minimal Compose UI
 - Upload expenses to a Google Sheet
 - Logout functionality
 - Supports multiple devices (sign in with the same Google account)
@@ -44,7 +44,7 @@ git clone https://github.com/your-username/expenses-uploader.git
 cd expenses-uploader
 ```
 
-### 2. Configure your Google Cloud project
+### 2. Configure your Google Cloud project to link Google sign-in and Google Sheets
 
 - Go to Google Cloud Console
 - Create a new project
@@ -55,8 +55,9 @@ cd expenses-uploader
     - do the same for "Google Drive API"
 - Create an OAuth 2.0 Client ID for Android:
     - Package name (same of the app): com.stepx0.expenses_uploader
-    - SHA-1: Use your project debug or release keystore (generate it locally form Gradle --> Tasks --> Android --> signingReport)
-- Configure the OAuth consent screen (set it External, add https://www.googleapis.com/auth/spreadsheets scope).
+    - set the SHA-1: Use your project debug or release keystore (generate it locally form Gradle --> Tasks --> Android --> signingReport)
+- Configure the OAuth consent screen (set it External, add https://www.googleapis.com/auth/spreadsheets scope)
+- Ensure your email has access to the project: IAM --> Grant Access --> set email and role --> save
 
 ### 3. Set up local.properties
 
@@ -73,7 +74,7 @@ UPLOAD_RANGE=range_where_expense_is_uploaded
 This ensures your personal spreadsheet stays private.
 
 > [!NOTE]
-> If Sheet file has multiple sheets in it, you can simply set sheet name before ranges (ex: Expenses!A:I)
+> If Google Sheet file has multiple sheets in it, you can simply set sheet name before ranges (ex: Expenses!A:I)
 
 > [!WARNING]
 > Again, do not commit this file!
