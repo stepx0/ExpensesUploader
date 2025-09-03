@@ -65,9 +65,15 @@ Create a `local.properties` file in your project root (it is `.gitignored`, so s
 ```
 SPREADSHEET_ID=your_google_sheet_id_here
 GID=your_google_sheet_specific_page_gid_here (optional)
+PRIMARY_CAT_RANGE=range_of_expense_primary_category
+SECONDARY_CAT_RANGE=range_of_expense_secondary_category
+UPLOAD_RANGE=range_where_expense_is_uploaded
 ```
 
 This ensures your personal spreadsheet stays private.
+
+> [!NOTE]
+> If Sheet file has multiple sheets in it, you can simply set sheet name before ranges (ex: Expenses!A:I)
 
 > [!WARNING]
 > Again, do not commit this file!
