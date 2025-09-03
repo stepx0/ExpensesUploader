@@ -27,9 +27,9 @@ Here are some screenshots to help visualize how it works:
 
 <br>
 <div>
-  <img src="docs/Screenshot_20250829-190329.png" alt="Screenshot 1" width="334"/>
-  <img src="docs/Screenshot_20250829-190532.png" alt="Screenshot 2" width="334"/>
-  <img src="docs/Screenshot_20250829-190654.png" alt="Screenshot 3" width="334"/>
+  <img src="docs/Screenshot_20250903-191835.png" alt="Screenshot 1" width="334"/>
+  <img src="docs/Screenshot_20250903-191901.png" alt="Screenshot 2" width="334"/>
+  <img src="docs/Screenshot_20250903-191933.png" alt="Screenshot 3" width="334"/>
 </div>
 
 // TODO: update screenshots with scanning logic enhancement.
