@@ -1,6 +1,7 @@
 package com.stepx0.expenses_uploader.data
 
 import com.google.api.services.sheets.v4.Sheets
+import com.google.api.services.sheets.v4.model.AppendValuesResponse
 import com.google.api.services.sheets.v4.model.ValueRange
 import com.stepx0.expenses_uploader.model.Expense
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ suspend fun appendExpenseRow(
     sheetsService: Sheets,
     spreadsheetId: String,
     expense: Expense
-) = withContext(Dispatchers.IO) {
+): AppendValuesResponse? = withContext(Dispatchers.IO) {
     val body = ValueRange().setValues(listOf(expense.toRow()))
     sheetsService.spreadsheets().values()
         .append(spreadsheetId, "Expenses!A:I", body)

@@ -11,39 +11,44 @@ import kotlin.math.min
  * BertModel for processing receipts.
  * Automatically adapts to the input/output tensor shapes of the TFLite model.
  */
-class BertModel(private val context: Context) {
+class BertModel(private val tfLite: Interpreter,
+                private val maxSequenceLength: Int = 512) {
 
-    private val tflite: Interpreter
-    private val maxSequenceLength: Int
+    companion object {
+        fun load(context: Context): BertModel {
+            val modelFile = FileUtil.loadMappedFile(
+                context.applicationContext,
+                "mobilebert-tflite-default-v1.tflite"
+            )
+            val tfliteInstace = Interpreter(modelFile)
 
-    init {
-        // Load TFLite model
-        val modelFile = FileUtil.loadMappedFile(context, "mobilebert-tflite-default-v1.tflite")
-        tflite = Interpreter(modelFile)
+            // Dynamically determine max sequence length from the input tensor shape
+            val inputTensor = tfliteInstace.getInputTensor(0)
+            val shape = inputTensor.shape() // [1, seq_len]
 
-        // Dynamically determine max sequence length from the input tensor shape
-        val inputTensor = tflite.getInputTensor(0)
-        val shape = inputTensor.shape() // [1, seq_len]
-        maxSequenceLength = shape[1]
+            printModelInfo(tfliteInstace)
 
-        printModelInfo()
-    }
-
-    private fun printModelInfo() {
-        println("=== BERT Model Info ===")
-        println("Input tensor count: ${tflite.inputTensorCount}")
-        println("Output tensor count: ${tflite.outputTensorCount}")
-
-        for (i in 0 until tflite.inputTensorCount) {
-            val tensor = tflite.getInputTensor(i)
-            println("Input $i: ${tensor.name()}, shape: ${tensor.shape().contentToString()}, type: ${tensor.dataType()}")
+            return BertModel(tfliteInstace, shape[1])
         }
 
-        for (i in 0 until tflite.outputTensorCount) {
-            val tensor = tflite.getOutputTensor(i)
-            println("Output $i: ${tensor.name()}, shape: ${tensor.shape().contentToString()}, type: ${tensor.dataType()}")
+        private fun printModelInfo(tfLite: Interpreter) {
+            println("=== BERT Model Info ===")
+            println("Input tensor count: ${tfLite.inputTensorCount}")
+            println("Output tensor count: ${tfLite.outputTensorCount}")
+
+            for (i in 0 until tfLite.inputTensorCount) {
+                val tensor = tfLite.getInputTensor(i)
+                println("Input $i: ${tensor.name()}, shape: ${tensor.shape().contentToString()}, type: ${tensor.dataType()}")
+            }
+
+            for (i in 0 until tfLite.outputTensorCount) {
+                val tensor = tfLite.getOutputTensor(i)
+                println("Output $i: ${tensor.name()}, shape: ${tensor.shape().contentToString()}, type: ${tensor.dataType()}")
+            }
         }
     }
+
+
 
     /**
      * Character-level tokenization
@@ -91,8 +96,8 @@ class BertModel(private val context: Context) {
         attentionMaskBuffer.rewind()
 
         // Determine output tensor shapes dynamically
-        val outputDescShape = tflite.getOutputTensor(0).shape() // [1, seq_len] or similar
-        val outputAmountShape = tflite.getOutputTensor(1).shape()
+        val outputDescShape = tfLite.getOutputTensor(0).shape() // [1, seq_len] or similar
+        val outputAmountShape = tfLite.getOutputTensor(1).shape()
 
         val outputDescription = Array(outputDescShape[0]) { FloatArray(outputDescShape[1]) }
         val outputAmount = Array(outputAmountShape[0]) { FloatArray(outputAmountShape[1]) }
@@ -101,7 +106,7 @@ class BertModel(private val context: Context) {
         val outputs = mapOf(0 to outputDescription, 1 to outputAmount)
 
         // Run inference
-        tflite.runForMultipleInputsOutputs(inputs, outputs)
+        tfLite.runForMultipleInputsOutputs(inputs, outputs)
 
         return BertReceiptOutput(
             originalText = ocrText,
@@ -156,7 +161,7 @@ class BertModel(private val context: Context) {
     }
 
     fun close() {
-        tflite.close()
+        tfLite.close()
     }
 }
 

@@ -147,29 +147,6 @@ object OcrHelper {
     }
 
     /**
-     * Get detailed extraction info for debugging
-     */
-    suspend fun getExtractionDebugInfo(
-        context: Context,
-        uri: Uri,
-        bertModel: BertModel
-    ): ReceiptExtractionDebugInfo {
-        val ocrText = runOcrOnUri(context, uri)
-        val bertOutput = bertModel.processReceiptText(ocrText)
-
-        return ReceiptExtractionDebugInfo(
-            originalOcrText = ocrText,
-            tokenizedLength = bertOutput.tokenizedInput.size,
-            descriptionConfidenceAvg = bertOutput.descriptionScores.average().toFloat(),
-            amountConfidenceAvg = bertOutput.amountScores.average().toFloat(),
-            extractedDescription = bertModel.extractDescription(bertOutput),
-            extractedAmount = bertModel.extractAmount(bertOutput),
-            maxDescriptionConfidence = bertOutput.descriptionScores.maxOrNull() ?: 0f,
-            maxAmountConfidence = bertOutput.amountScores.maxOrNull() ?: 0f
-        )
-    }
-
-    /**
      * heuristic to extract amount (typically more precise)
      */
     fun extractTotal(lines: List<String>): String {
@@ -204,44 +181,5 @@ object OcrHelper {
         }
 
         return numbers.maxOfOrNull { it.toDoubleOrNull() ?: 0.0 }?.toString() ?: ""
-    }
-
-    /**
-     * Check if an image likely contains a receipt
-     */
-    suspend fun isReceiptImage(context: Context, uri: Uri, bertModel: BertModel): Boolean {
-        val ocrText = runOcrOnUri(context, uri)
-
-        // Quick heuristic check for receipt-like content
-        val receiptKeywords = listOf(
-            "total", "totale", "receipt", "scontrino", "€", "$",
-            "tax", "iva", "payment", "pagamento", "cash", "card"
-        )
-
-        val hasReceiptKeywords = receiptKeywords.any {
-            ocrText.contains(it, ignoreCase = true)
-        }
-
-        val hasAmountPattern = Regex("\\d+[.,]\\d{2}").containsMatchIn(ocrText)
-
-        return hasReceiptKeywords && hasAmountPattern
-    }
-}
-
-/**
- * Data class for debugging extraction results
- */
-data class ReceiptExtractionDebugInfo(
-    val originalOcrText: String,
-    val tokenizedLength: Int,
-    val descriptionConfidenceAvg: Float,
-    val amountConfidenceAvg: Float,
-    val extractedDescription: String,
-    val extractedAmount: String,
-    val maxDescriptionConfidence: Float,
-    val maxAmountConfidence: Float
-) {
-    fun isExtractionReliable(): Boolean {
-        return maxDescriptionConfidence > 0.3f && maxAmountConfidence > 0.3f
     }
 }

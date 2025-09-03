@@ -9,20 +9,17 @@ import kotlinx.coroutines.sync.withLock
  * Singleton manager for BERT model to avoid repeated loading/unloading
  */
 object BertModelManager {
-    private var bertModel: BertModel? = null
+    private var _bertModel: BertModel? = null
     private val mutex = Mutex()
 
     suspend fun getBertModel(context: Context): BertModel = mutex.withLock {
-        if (bertModel == null) {
-            bertModel = BertModel(context.applicationContext)
-        }
-        return bertModel!!
+        _bertModel ?: BertModel.load(context).also { _bertModel = it }
     }
 
     suspend fun releaseBertModel() = mutex.withLock {
-        bertModel?.close()
-        bertModel = null
+        _bertModel?.close()
+        _bertModel = null
     }
 
-    fun isModelLoaded(): Boolean = bertModel != null
+    fun isModelLoaded(): Boolean = _bertModel != null
 }
