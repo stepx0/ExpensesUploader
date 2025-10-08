@@ -17,15 +17,15 @@ data class Expense(
      * Convert this expense into a row (list of strings)
      * ready to be sent to Google Sheets.
      */
-    fun toRow(): List<String> {
+    fun toRow(): List<*> {
         return listOf(
             month,
             day,
             description,
-            amount,
+            amount.toDouble(),
             currency,
             "", // % company (in case it's for a business)
-            amount,
+            amount.toDouble(),
             category,
             subCategory
         )
