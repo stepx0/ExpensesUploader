@@ -2,6 +2,7 @@ package com.stepx0.expenses_uploader.ui
 
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.util.Log
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -251,14 +252,17 @@ fun ExpenseForm(
                         month = month,
                         day = day,
                         description = description,
-                        amount = amount,
+                        amount = if(!amount.contains(".")) "$amount.00" else amount,
                         currency = "",
                         category = selectedPrimaryCategory,
                         subCategory = selectedSecondaryCategory
                     )
                     scope.launch {
                         try {
+
+                            expense.print()
                             appendExpenseRow(sheetsService, spreadsheetId, expense, UPLOAD_RANGE)
+
                             // Clear form on success
                             year = calendar.get(Calendar.YEAR).toString()
                             month = (calendar.get(Calendar.MONTH) + 1).toString()
@@ -273,6 +277,7 @@ fun ExpenseForm(
                                 Toast.LENGTH_LONG
                             ).show()
                         } catch (e: Exception) {
+                            Log.d("ExpensesForm", "Error: " + e.message.toString())
                             Toast.makeText(
                                 context,
                                 "Error! Failed to upload expense.",

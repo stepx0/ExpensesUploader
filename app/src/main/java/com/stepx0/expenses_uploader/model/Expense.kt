@@ -1,5 +1,7 @@
 package com.stepx0.expenses_uploader.model
 
+import android.util.Log
+
 /**
  * Represents a single expense entry.
  */
@@ -19,8 +21,8 @@ data class Expense(
      */
     fun toRow(): List<*> {
         return listOf(
-            month,
-            day,
+            month.toDouble(),
+            day.toDouble(),
             description,
             amount.toDouble(),
             currency,
@@ -29,5 +31,14 @@ data class Expense(
             category,
             subCategory
         )
+    }
+
+    fun print() {
+        Log.d("Expense -- ",
+            "month: "+ month + ", " +
+                    "day: " + day + ", " +
+                    "description: " + description + ", " +
+                    "amount: " + amount + ", " +
+                    "currency: " + currency)
     }
 }
